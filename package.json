@@ -1,0 +1,40 @@
+{
+  "name": "rtmpl",
+  "version": "0.0.0",
+  "description": "Reactive tagged template literals.",
+  "bugs": {
+    "url": "https://github.com/clebert/rtmpl/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/clebert/rtmpl.git"
+  },
+  "license": "MIT",
+  "author": "Clemens Akens <clebert@me.com>",
+  "sideEffects": false,
+  "main": "lib/cjs/index.js",
+  "module": "lib/esm/index.js",
+  "types": "lib/esm/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "preci": "run-s setup",
+    "ci": "run-p compile format:check lint test",
+    "postci": "run-s start",
+    "compile": "onecmd compile",
+    "format": "onecmd format",
+    "format:check": "onecmd format --check",
+    "lint": "onecmd lint",
+    "prepare": "run-s setup",
+    "release": "npm version",
+    "postrelease": "git push --follow-tags",
+    "setup": "onecmd setup",
+    "start": "echo Hello, World!",
+    "test": "onecmd test"
+  },
+  "devDependencies": {
+    "@onecmd/standard-plugins": "^0.11.0",
+    "npm-run-all": "^4.1.5"
+  }
+}
