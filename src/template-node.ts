@@ -36,8 +36,8 @@ export class TemplateNode<TValue> {
 
   subscribe(observer: TemplateNodeObserver<TValue>): () => void {
     if (!this.#observers.has(observer)) {
-      this.#observe();
       this.#observers.add(observer);
+      this.#observe();
       observer(...this.#compose());
     }
 
@@ -58,10 +58,7 @@ export class TemplateNode<TValue> {
         prevChildren.delete(child);
       } else if (child instanceof TemplateNode) {
         child.#bindTo(this);
-
-        if (this.#observed) {
-          child.#observe();
-        }
+        child.#observe();
       }
     }
 
@@ -159,7 +156,7 @@ export class TemplateNode<TValue> {
   }
 
   #observe(): void {
-    if (!this.#observeEventFired) {
+    if (this.#observed && !this.#observeEventFired) {
       this.#observeEventFired = true;
 
       for (const listener of this.#observeListeners) {
