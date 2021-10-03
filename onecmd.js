@@ -16,21 +16,6 @@ const plugins = [
   std.prettier(),
   std.typescript('node', 'package'),
   std.vscode({showFilesInEditor: false}),
-
-  {
-    setup: () => [
-      {
-        type: 'mod',
-        path: 'tsconfig.json',
-        is: std.isObject,
-
-        update: (content) => ({
-          ...content,
-          include: [...content.include, 'example/*.js'],
-        }),
-      },
-    ],
-  },
 ];
 
 module.exports = plugins;

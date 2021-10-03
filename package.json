@@ -21,7 +21,6 @@
   "scripts": {
     "preci": "run-s setup",
     "ci": "run-p compile format:check lint test",
-    "postci": "run-s start",
     "compile": "onecmd compile",
     "format": "onecmd format",
     "format:check": "onecmd format --check",
@@ -30,7 +29,6 @@
     "release": "npm version",
     "postrelease": "git push --follow-tags",
     "setup": "onecmd setup",
-    "start": "echo Hello, World!",
     "test": "onecmd test"
   },
   "devDependencies": {

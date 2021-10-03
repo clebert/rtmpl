@@ -24,90 +24,63 @@ describe('TemplateNode', () => {
     expectedEffects = [];
   });
 
-  test('node composition', () => {
-    const nodeC = TemplateNode.create`\nC1${'c1'}\nC2`;
+  test('string composition', () => {
+    const nodeD = TemplateNode.create`\nD1${'d1'}\nD2`;
+    const nodeC = TemplateNode.create`\nC1${'c1'}\nC2${nodeD}\nC3`;
     const nodeB = TemplateNode.create`\nB1${'b1'}\nB2${nodeC}\nB3`;
-    const nodeA = TemplateNode.create`\nA1${'a1'}\nA2${nodeB}\nA3`;
+    const nodeA = TemplateNode.create`\nA1${'a1'}\nA2${nodeC}\nA3`;
 
     nodeA.subscribe(observer);
 
     expectEffects(
-      compose`\nA1${'a1'}\nA2\nB1${'b1'}\nB2\nC1${'c1'}\nC2\nB3\nA3`
+      compose`\nA1${'a1'}\nA2\nC1${'c1'}\nC2\nD1${'d1'}\nD2\nC3\nA3`
     );
 
     nodeB.subscribe(observer);
-    expectEffects(compose`\nB1${'b1'}\nB2\nC1${'c1'}\nC2\nB3`);
-    nodeC.subscribe(observer);
-    expectEffects(compose`\nC1${'c1'}\nC2`);
-    nodeA.update`\nA1${'a2'}\nA2${nodeB}\nA3`;
 
     expectEffects(
-      compose`\nA1${'a2'}\nA2\nB1${'b1'}\nB2\nC1${'c1'}\nC2\nB3\nA3`
+      compose`\nB1${'b1'}\nB2\nC1${'c1'}\nC2\nD1${'d1'}\nD2\nC3\nB3`
+    );
+
+    nodeC.subscribe(observer);
+    expectEffects(compose`\nC1${'c1'}\nC2\nD1${'d1'}\nD2\nC3`);
+    nodeD.subscribe(observer);
+    expectEffects(compose`\nD1${'d1'}\nD2`);
+    nodeA.update`\nA1${'a2'}\nA2${nodeC}\nA3`;
+
+    expectEffects(
+      compose`\nA1${'a2'}\nA2\nC1${'c1'}\nC2\nD1${'d1'}\nD2\nC3\nA3`
     );
 
     nodeB.update`\nB1${'b2'}\nB2${nodeC}\nB3`;
 
     expectEffects(
-      compose`\nB1${'b2'}\nB2\nC1${'c1'}\nC2\nB3`,
-      compose`\nA1${'a2'}\nA2\nB1${'b2'}\nB2\nC1${'c1'}\nC2\nB3\nA3`
+      compose`\nB1${'b2'}\nB2\nC1${'c1'}\nC2\nD1${'d1'}\nD2\nC3\nB3`
     );
 
-    nodeC.update`\nC1${'c2'}\nC2`;
+    nodeC.update`\nC1${'c2'}\nC2${nodeD}\nC3`;
 
     expectEffects(
-      compose`\nC1${'c2'}\nC2`,
-      compose`\nB1${'b2'}\nB2\nC1${'c2'}\nC2\nB3`,
-      compose`\nA1${'a2'}\nA2\nB1${'b2'}\nB2\nC1${'c2'}\nC2\nB3\nA3`
+      compose`\nC1${'c2'}\nC2\nD1${'d1'}\nD2\nC3`,
+      compose`\nB1${'b2'}\nB2\nC1${'c2'}\nC2\nD1${'d1'}\nD2\nC3\nB3`,
+      compose`\nA1${'a2'}\nA2\nC1${'c2'}\nC2\nD1${'d1'}\nD2\nC3\nA3`
+    );
+
+    nodeD.update`\nD1${'d2'}\nD2`;
+
+    expectEffects(
+      compose`\nD1${'d2'}\nD2`,
+      compose`\nC1${'c2'}\nC2\nD1${'d2'}\nD2\nC3`,
+      compose`\nB1${'b2'}\nB2\nC1${'c2'}\nC2\nD1${'d2'}\nD2\nC3\nB3`,
+      compose`\nA1${'a2'}\nA2\nC1${'c2'}\nC2\nD1${'d2'}\nD2\nC3\nA3`
     );
   });
 
-  test('node nesting', () => {
-    const nodeA = TemplateNode.create<string>`a`;
-    const nodeB = TemplateNode.create<string>`b`;
-    const nodeC = TemplateNode.create<string>`c`;
-
-    nodeA.subscribe(observer);
-    expectEffects(compose`a`);
-    nodeB.subscribe(observer);
-    expectEffects(compose`b`);
-    nodeA.update`a${nodeB}${nodeB}${nodeC}`;
-    expectEffects(compose`abbc`);
-    nodeA.update`a${nodeB}`;
-    expectEffects(compose`ab`);
-    nodeB.update`b${nodeC}${nodeC}`;
-    expectEffects(compose`bcc`, compose`abcc`);
-    nodeA.update`a${nodeB}${nodeB}`;
-    expectEffects(compose`abccbcc`);
-    nodeB.update`b`;
-    expectEffects(compose`b`, compose`abb`);
-    nodeA.update`a${nodeB}${nodeC}`;
-    expectEffects(compose`abc`);
-  });
-
-  test('illegal node nesting when creating', () => {
-    const nodeC = TemplateNode.create`c`;
-
-    TemplateNode.create`b${nodeC}`;
-
-    expect(() => TemplateNode.create`a${nodeC}`).toThrow(
-      new Error('A template node can have only one parent.')
-    );
-  });
-
-  test('illegal node nesting when updating', () => {
-    const nodeC = TemplateNode.create`c`;
-    const nodeB = TemplateNode.create`b${nodeC}`;
-    const nodeA = TemplateNode.create`a${nodeB}`;
-
-    expect(() => nodeA.update`a${nodeC}`).toThrow(
-      new Error('A template node can have only one parent.')
-    );
-  });
-
-  test('node observation', () => {
-    const nodeC = TemplateNode.create`${'c'}`;
-    const nodeB = TemplateNode.create`${'b'}${nodeC}`;
-    const nodeA = TemplateNode.create`${'a'}${nodeB}${nodeB}`;
+  test('observation by subscribe', () => {
+    const nodeD = TemplateNode.create`${'d'}`;
+    const nodeC = TemplateNode.create`${'c'}${nodeD}`;
+    const nodeB = TemplateNode.create`${'b'}${nodeC}${nodeC}`;
+    const nodeA = TemplateNode.create`${'a'}${nodeC}`;
 
     nodeA.on('observe', () => effects.push('observe a'));
     nodeA.on('unobserve', () => effects.push('unobserve a'));
@@ -115,52 +88,81 @@ describe('TemplateNode', () => {
     nodeB.on('unobserve', () => effects.push('unobserve b'));
     nodeC.on('observe', () => effects.push('observe c'));
     nodeC.on('unobserve', () => effects.push('unobserve c'));
+    nodeD.on('observe', () => effects.push('observe d'));
+    nodeD.on('unobserve', () => effects.push('unobserve d'));
 
-    const unsubscribeA1 = nodeA.subscribe(() => effects.push('value1 a'));
+    const unsubscribeB = nodeB.subscribe(observer);
 
-    expectEffects('observe a', 'observe b', 'observe c', 'value1 a');
+    expectEffects(
+      'observe b',
+      'observe c',
+      'observe d',
+      compose`${'b'}${'c'}${'d'}${'c'}${'d'}`
+    );
 
-    const unsubscribeA2 = nodeA.subscribe(() => effects.push('value2 a'));
+    const unsubscribeA = nodeA.subscribe(observer);
 
-    expectEffects('value2 a');
-    nodeA.update`${'a'}${nodeB}`;
-    expectEffects('value1 a', 'value2 a');
-    nodeA.update`${'a'}`;
-    expectEffects('unobserve b', 'unobserve c', 'value1 a', 'value2 a');
-    unsubscribeA1();
+    expectEffects('observe a', compose`${'a'}${'c'}${'d'}`);
+    unsubscribeB();
+    expectEffects('unobserve b');
+    unsubscribeA();
+    expectEffects('unobserve a', 'unobserve c', 'unobserve d');
+  });
+
+  test('observation by update', () => {
+    const nodeA = TemplateNode.create`${'a'}`;
+    const nodeB = TemplateNode.create`${'b'}`;
+    const nodeC = TemplateNode.create`${'c'}`;
+    const nodeD = TemplateNode.create`${'d'}`;
+
+    nodeA.on('observe', () => effects.push('observe a'));
+    nodeA.on('unobserve', () => effects.push('unobserve a'));
+    nodeB.on('observe', () => effects.push('observe b'));
+    nodeB.on('unobserve', () => effects.push('unobserve b'));
+    nodeC.on('observe', () => effects.push('observe c'));
+    nodeC.on('unobserve', () => effects.push('unobserve c'));
+    nodeD.on('observe', () => effects.push('observe d'));
+    nodeD.on('unobserve', () => effects.push('unobserve d'));
+
+    nodeC.update`${'c'}${nodeD}`;
     expectEffects();
-    unsubscribeA2();
-    expectEffects('unobserve a');
+    nodeB.subscribe(observer);
+    expectEffects('observe b', compose`${'b'}`);
+    nodeB.update`${'b'}${nodeC}${nodeC}`;
 
-    const unsubscribeC1 = nodeC.subscribe(() => effects.push('value1 c'));
+    expectEffects(
+      'observe c',
+      'observe d',
+      compose`${'b'}${'c'}${'d'}${'c'}${'d'}`
+    );
 
-    expectEffects('observe c', 'value1 c');
-
-    const unsubscribeA3 = nodeA.subscribe(() => effects.push('value3 a'));
-
-    expectEffects('observe a', 'value3 a');
-    nodeA.update`${'a'}${nodeB}`;
-    expectEffects('observe b', 'value3 a');
-
-    const unsubscribeC2 = nodeC.subscribe(() => effects.push('value2 c'));
-
-    expectEffects('value2 c');
-    unsubscribeC1();
-    expectEffects();
-    unsubscribeC2();
-    expectEffects();
-
-    const unsubscribeB1 = nodeB.subscribe(() => effects.push('value1 b'));
-
-    expectEffects('value1 b');
-    unsubscribeA3();
-    expectEffects('unobserve a');
-    unsubscribeB1();
-    expectEffects('unobserve b', 'unobserve c');
+    nodeA.subscribe(observer);
+    expectEffects('observe a', compose`${'a'}`);
+    nodeA.update`${'a'}${nodeC}`;
+    expectEffects(compose`${'a'}${'c'}${'d'}`);
     nodeB.update`${'b'}`;
-    expectEffects();
-    nodeB.update`${'b'}${nodeC}`;
-    expectEffects();
+    expectEffects(compose`${'b'}`);
+    nodeA.update`${'a'}`;
+    expectEffects('unobserve c', 'unobserve d', compose`${'a'}`);
+    nodeC.update`${'c'}`;
+  });
+
+  test('error by recursion', () => {
+    const nodeA = TemplateNode.create``;
+    const nodeB = TemplateNode.create`${nodeA}`;
+    const nodeC = TemplateNode.create`${nodeB}`;
+
+    expect(() => nodeA.update`${nodeA}`).toThrow(
+      new Error('A node cannot be a descendant of itself.')
+    );
+
+    expect(() => nodeA.update`${nodeB}`).toThrow(
+      new Error('A node cannot be a descendant of itself.')
+    );
+
+    expect(() => nodeA.update`${nodeC}`).toThrow(
+      new Error('A node cannot be a descendant of itself.')
+    );
   });
 
   test('multiple observers', () => {
@@ -195,7 +197,7 @@ describe('TemplateNode', () => {
   test('multiple observe event listeners', () => {
     const listener1 = jest.fn();
     const listener2 = jest.fn();
-    const node = TemplateNode.create`a`;
+    const node = TemplateNode.create``;
     const off1 = node.on('observe', listener1);
 
     node.on('observe', listener1);
@@ -222,7 +224,7 @@ describe('TemplateNode', () => {
   test('multiple unobserve event listeners', () => {
     const listener1 = jest.fn();
     const listener2 = jest.fn();
-    const node = TemplateNode.create`a`;
+    const node = TemplateNode.create``;
     const off1 = node.on('unobserve', listener1);
 
     node.on('unobserve', listener1);

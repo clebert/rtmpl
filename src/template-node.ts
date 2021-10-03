@@ -14,8 +14,8 @@ export class TemplateNode<TValue> {
 
   #template: TemplateStringsArray;
   #children: readonly (TemplateNode<TValue> | TValue)[];
+  #parents = new Set<TemplateNode<TValue>>();
   #observers = new Set<TemplateNodeObserver<TValue>>();
-  #parent?: TemplateNode<TValue>;
   #observeListeners = new Set<() => void>();
   #unobserveListeners = new Set<() => void>();
   #observeEventFired = false;
@@ -26,7 +26,7 @@ export class TemplateNode<TValue> {
   ) {
     for (const child of children) {
       if (child instanceof TemplateNode) {
-        child.#bindTo(this);
+        child.#parents.add(this);
       }
     }
 
@@ -51,21 +51,35 @@ export class TemplateNode<TValue> {
     template: TemplateStringsArray,
     ...children: (TemplateNode<TValue> | TValue)[]
   ): void {
+    for (const child of children) {
+      if (child instanceof TemplateNode) {
+        if (child.#includes(this)) {
+          throw new Error('A node cannot be a descendant of itself.');
+        }
+      }
+    }
+
     const prevChildren = new Set(this.#children);
 
     for (const child of children) {
       if (prevChildren.has(child)) {
         prevChildren.delete(child);
       } else if (child instanceof TemplateNode) {
-        child.#bindTo(this);
-        child.#observe();
+        child.#parents.add(this);
+
+        if (this.#observed) {
+          child.#observe();
+        }
       }
     }
 
     for (const child of prevChildren) {
       if (child instanceof TemplateNode) {
-        child.#parent = undefined;
-        child.#unobserve();
+        child.#parents.delete(this);
+
+        if (this.#observed) {
+          child.#unobserve();
+        }
       }
     }
 
@@ -93,12 +107,13 @@ export class TemplateNode<TValue> {
     };
   }
 
-  #bindTo(parent: TemplateNode<TValue>): void {
-    if (this.#parent && this.#parent !== parent) {
-      throw new Error('A template node can have only one parent.');
-    }
-
-    this.#parent = parent;
+  #includes(parent: TemplateNode<TValue>): boolean {
+    return (
+      this === parent ||
+      this.#children.some(
+        (child) => child instanceof TemplateNode && child.#includes(parent)
+      )
+    );
   }
 
   #publish(): void {
@@ -110,8 +125,8 @@ export class TemplateNode<TValue> {
       }
     }
 
-    if (this.#parent) {
-      this.#parent.#publish();
+    for (const parent of this.#parents) {
+      parent.#publish();
     }
   }
 
@@ -151,7 +166,7 @@ export class TemplateNode<TValue> {
   get #observed(): boolean {
     return (
       this.#observers.size > 0 ||
-      (this.#parent ? this.#parent.#observed : false)
+      [...this.#parents].some((parent) => parent.#observed)
     );
   }
 
