@@ -18,6 +18,18 @@
 npm install rtmpl --save
 ```
 
+## Usage
+
+The concept of this library arose from the requirement to dynamically generate
+the text output of CLI applications. However, this may not be the only
+reasonable usage scenario. Therefore, this library contains only the conceptual
+core in the form of the so-called template nodes. These nodes can be nested
+within each other in a tree structure and are observable.
+
+To learn how to generate the text output of CLI applications using this library,
+please refer to the README of project
+[@rtmpl/terminal](https://github.com/clebert/rtmpl-terminal).
+
 ## Types
 
 ```ts

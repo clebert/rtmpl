@@ -1,4 +1,4 @@
-import {TemplateNode, TemplateNodeObserver} from '.';
+import {TemplateNode, TemplateNodeObserver} from './template-node';
 
 type Composition = readonly [
   template: TemplateStringsArray,
