@@ -1,3 +1,5 @@
+// Copyright 2021 Clemens Akens. All rights reserved. MIT license.
+
 export type TemplateNodeObserver<TValue> = (
   template: TemplateStringsArray,
   ...values: TValue[]
