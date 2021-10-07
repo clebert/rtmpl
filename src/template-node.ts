@@ -1,5 +1,7 @@
 // Copyright 2021 Clemens Akens. All rights reserved. MIT license.
 
+import type {TaggedTemplate} from './util/tag';
+
 export type TemplateNodeObserver<TValue> = (
   template: TemplateStringsArray,
   ...values: TValue[]
@@ -40,7 +42,7 @@ export class TemplateNode<TValue> {
     if (!this.#observers.has(observer)) {
       this.#observers.add(observer);
       this.#observe();
-      observer(...this.#compose());
+      observer(...this.#flatten());
     }
 
     return (): void => {
@@ -122,7 +124,7 @@ export class TemplateNode<TValue> {
 
   #publish(): void {
     if (this.#observers.size > 0) {
-      const [template, ...values] = this.#compose();
+      const [template, ...values] = this.#flatten();
 
       for (const observer of this.#observers) {
         observer(template, ...values);
@@ -134,7 +136,7 @@ export class TemplateNode<TValue> {
     }
   }
 
-  #compose(): readonly [template: TemplateStringsArray, ...values: TValue[]] {
+  #flatten(): TaggedTemplate<TValue> {
     const template: string[] & {raw: string[]} = [] as any;
 
     template.raw = [];
@@ -148,7 +150,7 @@ export class TemplateNode<TValue> {
       const child = this.#children[index]!;
 
       if (child instanceof TemplateNode) {
-        const [childTemplate, ...childValues] = child.#compose();
+        const [childTemplate, ...childValues] = child.#flatten();
 
         template[template.length - 1] += childTemplate[0];
         template.raw[template.raw.length - 1] += childTemplate.raw[0];

@@ -32,6 +32,8 @@ please refer to the README of project
 
 ## Types
 
+### `TemplateNode`
+
 ```ts
 class TemplateNode<TValue> {
   static create<TValue>(
@@ -55,6 +57,37 @@ type TemplateNodeObserver<TValue> = (
   template: TemplateStringsArray,
   ...values: TValue[]
 ) => void;
+```
+
+### `TemplateNodeList`
+
+```ts
+class TemplateNodeList<TValue> {
+  static join<TValue>(
+    itemNodes: readonly (TemplateNode<TValue> | TValue)[],
+    options?: TemplateNodeListOptions<TValue>
+  ): [
+    template: TemplateStringsArray,
+    ...children: (TemplateNode<TValue> | TValue)[]
+  ];
+
+  readonly node: TemplateNode<TValue>;
+
+  constructor(options?: TemplateNodeListOptions<TValue>);
+
+  add(
+    template: TemplateStringsArray,
+    ...children: (TemplateNode<TValue> | TValue)[]
+  ): TemplateNode<TValue>;
+
+  delete(itemNode: TemplateNode<TValue>): void;
+}
+```
+
+```ts
+interface TemplateNodeListOptions<TValue> {
+  readonly separator?: TemplateNode<TValue> | NonNullable<TValue>;
+}
 ```
 
 ---
