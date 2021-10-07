@@ -52,7 +52,7 @@ export class TemplateNode<TValue> {
   update(
     template: TemplateStringsArray,
     ...children: (TemplateNode<TValue> | TValue)[]
-  ): void {
+  ): this {
     for (const child of children) {
       if (child instanceof TemplateNode) {
         if (child.#includes(this)) {
@@ -88,6 +88,8 @@ export class TemplateNode<TValue> {
     this.#template = template;
     this.#children = children;
     this.#publish();
+
+    return this;
   }
 
   on(eventType: 'observe' | 'unobserve', listener: () => void): () => void {

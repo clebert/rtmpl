@@ -44,7 +44,7 @@ class TemplateNode<TValue> {
   update(
     template: TemplateStringsArray,
     ...children: (TemplateNode<TValue> | TValue)[]
-  ): void;
+  ): this;
 
   on(event: 'observe' | 'unobserve', listener: () => void): () => void;
 }
