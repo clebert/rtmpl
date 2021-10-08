@@ -9,7 +9,7 @@ export interface TemplateNodeListOptions<TValue> {
 export class TemplateNodeList<TValue> {
   // eslint-disable-next-line no-shadow
   static join<TValue>(
-    itemNodes: readonly (TemplateNode<TValue> | TValue)[],
+    items: readonly (TemplateNode<TValue> | TValue)[],
     options: TemplateNodeListOptions<TValue> = {}
   ): [
     template: TemplateStringsArray,
@@ -22,7 +22,7 @@ export class TemplateNodeList<TValue> {
     const children: (TemplateNode<TValue> | TValue)[] = [];
     const {separator} = options;
 
-    for (let index = 0; index < itemNodes.length; index += 1) {
+    for (let index = 0; index < items.length; index += 1) {
       if (separator !== undefined && index > 0) {
         template.push('');
         template.raw.push('');
@@ -31,7 +31,7 @@ export class TemplateNodeList<TValue> {
 
       template.push('');
       template.raw.push('');
-      children.push(itemNodes[index]!);
+      children.push(items[index]!);
     }
 
     return [template, ...children];

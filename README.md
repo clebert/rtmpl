@@ -64,7 +64,7 @@ type TemplateNodeObserver<TValue> = (
 ```ts
 class TemplateNodeList<TValue> {
   static join<TValue>(
-    itemNodes: readonly (TemplateNode<TValue> | TValue)[],
+    items: readonly (TemplateNode<TValue> | TValue)[],
     options?: TemplateNodeListOptions<TValue>
   ): [
     template: TemplateStringsArray,
